@@ -89,8 +89,8 @@ class Pursuit:
         self.pos_gyro = [position_hexa[0], position_hexa[1]]
 
 
-        print("position :", self.pos)
-        print("orientation : ", self.ori)       # TODO : orientation is in the world frame
+        print("position: %7.3f %7.3f " % (self.pos[0], self.pos[1]),end=',')
+        print("orientation: %7.3f" % (self.ori))       # TODO : orientation is in the world frame
 
     def orientation(self):
         """
@@ -140,6 +140,13 @@ class Pursuit:
         vrep.simxSetFloatSignal(self.clientID, self.LSignalName, self.LCycleFreq, vrep.simx_opmode_oneshot)
         vrep.simxSetFloatSignal(self.clientID, self.RSignalName, self.RCycleFreq, vrep.simx_opmode_oneshot)
 
+# shut down robot and simulator
+    def halt(self):
+        self.LCycleFreq = 0
+        self.RCycleFreq = 0
+        self.publish()
+        print('halt: send 0 freq')
+        
     def getEta(self, pose):
         """
         get the eta between robot orientation and robot position to destination     TODO: how to get the delta orientation
@@ -185,13 +192,14 @@ class Pursuit:
         cos_theta = self.getCos()       # TODO : using arcCos
         # print("cos_theta : ", cos_theta)
         theta = math.acos(cos_theta)
-        print("Error : ", theta)
-        self.LCycleFreq = BaseFreq + (self.kp * theta + (theta - self.last_theta) * self.kd)
-        self.RCycleFreq = BaseFreq - (self.kp * theta + (theta - self.last_theta) * self.kd)
+     
+        print("Error : %7.3f "% (theta))
+       # self.LCycleFreq = BaseFreq + (self.kp * theta + (theta - self.last_theta) * self.kd)
+       # self.RCycleFreq = BaseFreq - (self.kp * theta + (theta - self.last_theta) * self.kd)
 
         # for test
-        # self.LCycleFreq = -BaseFreq
-        # self.RCycleFreq = BaseFreq
+        self.LCycleFreq = BaseFreq
+        self.RCycleFreq = 0.8*BaseFreq
 
         self.last_theta = theta
 
@@ -209,8 +217,15 @@ else:
 
 
 pursuit = Pursuit(clientID, LSignalName, RSignalName)
-while True:
-    pursuit.clearSignal()
-    pursuit.preparation()
-    pursuit.controller()
-    time.sleep(0.1)
+try:
+    while True:
+        pursuit.clearSignal()
+        pursuit.preparation()
+        pursuit.controller()
+        time.sleep(0.1)
+  # Handle ctrl-c case to quit and close the socket
+except KeyboardInterrupt as e:
+     print('Done')
+     pursuit.halt()
+     vrep.simxFinish(-1)  # clean up the previous stuff
+     
