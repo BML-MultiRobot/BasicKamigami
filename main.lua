@@ -120,7 +120,7 @@ function runLegControllers()
     for i=1, 3, 1 do   -- left side
         cyclePhase[i] = (cyclePhase[i] + dPhiL)
     end
-    for i=3, 6, 1 do   -- right side 
+    for i=4, 6, 1 do   -- right side 
         cyclePhase[i] = (cyclePhase[i] + dPhiR)
     end
   --  tempString = string.format('cycleFreqL = %6.2f  cycleFreqR = %6.2f \n', cycleFreqL, cycleFreqR)
